@@ -30,7 +30,10 @@ impl MigrationPlan {
         if revision.trim().is_empty() {
             return Err(InterfaceError::EmptyRevision);
         }
-        Ok(Self { id, revision, payload })
+        Ok(Self {
+            id,
+            revision,
+            payload,
+        })
     }
 }
-
