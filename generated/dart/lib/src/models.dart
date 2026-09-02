@@ -117,7 +117,7 @@ class MigrationCheck {
 }
 
 sealed class MigrationPhase {
-  const MigrationPhase(this.metadata);
+  const MigrationPhase({required this.metadata});
 
   final PhaseMetadata metadata;
 }
