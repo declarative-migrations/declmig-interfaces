@@ -1,0 +1,89 @@
+name: contract-ci
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/contract-ci.yml'
+      - 'Cargo.toml'
+      - 'src/**'
+      - 'schema/**'
+      - 'typespec/**'
+      - 'generated/typescript/**'
+      - 'generated/dart/**'
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contract-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.88.0 --profile minimal --component rustfmt,clippy
+      - name: Format
+        run: cargo +1.88.0 fmt --all -- --check
+      - name: Test typed contracts
+        run: cargo +1.88.0 test --all-targets
+      - name: Clippy
+        run: cargo +1.88.0 clippy --all-targets -- -D warnings
+
+  wire-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Install pinned Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 22.16.0
+          package-manager-cache: false
+      - name: Compile TypeSpec
+        working-directory: typespec
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          npm run generate
+      - name: Type-check generated TypeScript
+        run: >-
+          npx --yes typescript@5.8.3
+          --noEmit
+          --strict
+          --target ES2022
+          --module NodeNext
+          --moduleResolution NodeNext
+          generated/typescript/src/errors.ts
+          generated/typescript/src/index.ts
+          generated/typescript/src/protocol.ts
+          generated/typescript/src/types.ts
+      - name: Validate the v2 example
+        run: >-
+          npx --yes ajv-cli@5.0.0 validate
+          --spec=draft2020
+          --strict=true
+          -s schema/v2/migrationplan.json
+          -d schema/v2/examples/valid-plan.json
+      - name: Reject the legacy opaque payload
+        shell: bash
+        run: |
+          cat > /tmp/legacy-plan.json <<'JSON'
+          {"id":"legacy","revision":"declmig-0001","payload":{}}
+          JSON
+          if npx --yes ajv-cli@5.0.0 validate \
+            --spec=draft2020 \
+            --strict=true \
+            -s schema/v2/migrationplan.json \
+            -d /tmp/legacy-plan.json; then
+            echo 'legacy opaque payload unexpectedly passed v2 validation' >&2
+            exit 1
+          fi
