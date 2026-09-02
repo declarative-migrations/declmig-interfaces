@@ -89,3 +89,24 @@ jobs:
             echo 'legacy opaque payload unexpectedly passed v2 validation' >&2
             exit 1
           fi
+
+  dart:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Install pinned Dart SDK
+        uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260
+        with:
+          sdk: 3.4.0
+      - name: Resolve the generated package
+        working-directory: generated/dart
+        run: dart pub get --offline
+      - name: Check formatting
+        working-directory: generated/dart
+        run: dart format --output=none --set-exit-if-changed lib
+      - name: Analyze generated Dart
+        working-directory: generated/dart
+        run: dart analyze --fatal-infos --fatal-warnings
