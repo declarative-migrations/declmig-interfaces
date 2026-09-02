@@ -106,7 +106,9 @@ jobs:
         run: dart pub get --offline
       - name: Check formatting
         working-directory: generated/dart
-        run: dart format --output=none --set-exit-if-changed lib
+        run: |
+          dart format lib
+          git diff --exit-code -- lib
       - name: Analyze generated Dart
         working-directory: generated/dart
         run: dart analyze --fatal-infos --fatal-warnings
