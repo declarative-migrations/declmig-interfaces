@@ -4,12 +4,9 @@ use std::collections::BTreeSet;
 
 use serde::{Deserialize, Serialize};
 
-pub const PEER_AUTHORITY_CERTIFICATION_FORMAT: &str =
-    "declmig.peer-authority-certification/v1";
+pub const PEER_AUTHORITY_CERTIFICATION_FORMAT: &str = "declmig.peer-authority-certification/v1";
 
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize,
-)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum ComparisonKind {
     SqlCatalog,
@@ -116,16 +113,11 @@ impl PeerAuthorityCertification {
     /// result for every required comparison kind and no extra non-pass result.
     /// Duplicate, missing, discrepant, or errored evidence fails closed.
     #[must_use]
-    pub fn evaluate(
-        comparisons: Vec<ComparisonEvidence>,
-        inputs: PeerAuthorityInputs,
-    ) -> Self {
+    pub fn evaluate(comparisons: Vec<ComparisonEvidence>, inputs: PeerAuthorityInputs) -> Self {
         let decision_eligible = comparison_set_passes(&comparisons)
-            && comparisons.iter().all(|item| {
-                item.evidence_sha256
-                    .as_deref()
-                    .is_some_and(is_sha256)
-            })
+            && comparisons
+                .iter()
+                .all(|item| item.evidence_sha256.as_deref().is_some_and(is_sha256))
             && inputs.all_present_and_valid();
 
         Self {
@@ -150,11 +142,10 @@ impl PeerAuthorityCertification {
             && self.decision_eligible
             && self.policy == PeerAuthorityPolicy::default()
             && comparison_set_passes(&self.comparisons)
-            && self.comparisons.iter().all(|item| {
-                item.evidence_sha256
-                    .as_deref()
-                    .is_some_and(is_sha256)
-            })
+            && self
+                .comparisons
+                .iter()
+                .all(|item| item.evidence_sha256.as_deref().is_some_and(is_sha256))
             && self.inputs.all_present_and_valid()
     }
 }
@@ -171,9 +162,9 @@ fn comparison_set_passes(comparisons: &[ComparisonEvidence]) -> bool {
     let all_pass = comparisons
         .iter()
         .all(|item| item.status == ComparisonStatus::Pass);
-    let sql_exit_is_zero = comparisons.iter().all(|item| {
-        item.kind != ComparisonKind::SqlCatalog || item.tool_exit_code == Some(0)
-    });
+    let sql_exit_is_zero = comparisons
+        .iter()
+        .all(|item| item.kind != ComparisonKind::SqlCatalog || item.tool_exit_code == Some(0));
 
     unique && complete && all_pass && sql_exit_is_zero
 }
