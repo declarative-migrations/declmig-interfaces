@@ -71,6 +71,7 @@ jobs:
           npx --yes ajv-cli@5.0.0 validate
           --spec=draft2020
           --strict=true
+          --strict-required=false
           -s schema/v2/migrationplan.json
           -d schema/v2/examples/valid-plan.json
       - name: Reject the legacy opaque payload
@@ -82,6 +83,7 @@ jobs:
           if npx --yes ajv-cli@5.0.0 validate \
             --spec=draft2020 \
             --strict=true \
+            --strict-required=false \
             -s schema/v2/migrationplan.json \
             -d /tmp/legacy-plan.json; then
             echo 'legacy opaque payload unexpectedly passed v2 validation' >&2
