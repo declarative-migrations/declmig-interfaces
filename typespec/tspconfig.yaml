@@ -1,0 +1,9 @@
+warn-as-error: true
+emit:
+  - "@typespec/json-schema"
+options:
+  "@typespec/json-schema":
+    file-type: json
+    emitAllModels: true
+    seal-object-schemas: true
+    int64-strategy: string

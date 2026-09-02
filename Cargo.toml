@@ -1,16 +1,14 @@
-    [package]
-    name = "declmig-interfaces"
-    version = "0.1.0"
-    edition = "2021"
-    license = "MIT"
-    description = "Data-only interfaces for Declarative Migrations"
-    repository = "https://github.com/declarative-migrations/declmig-interfaces"
+[package]
+name = "declmig-interfaces"
+version = "0.2.0"
+edition = "2021"
+license = "MIT"
+description = "Data-only interfaces for Declarative Migrations"
+repository = "https://github.com/declarative-migrations/declmig-interfaces"
 
-    [dependencies]
-    serde = { version = "1", features = ["derive"] }
-    serde_json = "1"
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 
 [lints.rust]
 unsafe_code = "forbid"
-
-

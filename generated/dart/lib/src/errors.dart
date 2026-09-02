@@ -1,8 +1,9 @@
 class InterfaceException implements Exception {
-  const InterfaceException(this.code);
+  const InterfaceException(this.code, this.message);
+
   final String code;
+  final String message;
 
   @override
-  String toString() => 'InterfaceException($code)';
+  String toString() => 'InterfaceException($code, $message)';
 }
-

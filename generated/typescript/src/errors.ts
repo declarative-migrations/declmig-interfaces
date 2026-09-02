@@ -1,10 +1,18 @@
-export class InterfaceError extends Error {
-  readonly code: "empty_id" | "empty_revision";
+export type InterfaceErrorCode =
+  | "schema_mismatch"
+  | "invalid_format"
+  | "empty_field"
+  | "invalid_sha256"
+  | "empty_phases"
+  | "duplicate_phase_id"
+  | "invalid_phase";
 
-  constructor(code: "empty_id" | "empty_revision") {
-    super(code);
+export class InterfaceError extends Error {
+  readonly code: InterfaceErrorCode;
+
+  constructor(code: InterfaceErrorCode, message: string) {
+    super(message);
     this.code = code;
     this.name = "InterfaceError";
   }
 }
-

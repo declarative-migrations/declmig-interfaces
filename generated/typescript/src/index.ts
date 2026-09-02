@@ -1,5 +1,29 @@
-export { InterfaceError } from "./errors";
-export { parseMigrationPlan } from "./protocol";
-export type { Health, MigrationPlan } from "./types";
-export { PROTOCOL_VERSION, SCHEMA_REVISION } from "./types";
-
+export { InterfaceError, type InterfaceErrorCode } from "./errors.js";
+export { validateMigrationPlan } from "./protocol.js";
+export {
+  PLAN_FORMAT,
+  PROTOCOL_VERSION,
+  SCHEMA_REVISION,
+  type ApprovalRequirement,
+  type ChangeKind,
+  type CheckExpectation,
+  type CockroachSchemaJobPhase,
+  type DataBackfillPhase,
+  type DatabaseEngine,
+  type DestructiveCleanupPhase,
+  type Health,
+  type LockExpectation,
+  type MigrationChange,
+  type MigrationCheck,
+  type MigrationPhase,
+  type MigrationPlan,
+  type MigrationStatement,
+  type NonTransactionalDdlPhase,
+  type PhaseMetadata,
+  type RetryClass,
+  type RollbackClass,
+  type SafetyClass,
+  type TrafficTransitionPhase,
+  type TransactionalDdlPhase,
+  type ValidationPhase,
+} from "./types.js";

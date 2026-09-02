@@ -1,0 +1,16 @@
+{
+  "name": "@declarative-migrations/migration-plan-contract",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "scripts": {
+    "generate": "tsp compile main.tsp --output-dir tsp-output --warn-as-error"
+  },
+  "devDependencies": {
+    "@typespec/compiler": "1.15.0",
+    "@typespec/json-schema": "1.15.0"
+  }
+}

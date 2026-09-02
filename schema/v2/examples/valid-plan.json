@@ -1,0 +1,40 @@
+{
+  "format": "ores.migration-plan/v2",
+  "id": "plan-42",
+  "revision": "declmig-0002",
+  "engine": "postgresql",
+  "engine_version": "17.6",
+  "source_catalog_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "desired_catalog_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "rendered_sql_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "phases": [
+    {
+      "kind": "transactional_ddl",
+      "metadata": {
+        "id": "expand",
+        "safety": "online",
+        "retry": "idempotent",
+        "rollback": "reversible",
+        "approval": "operator",
+        "timeout_seconds": 30,
+        "lock_expectation": "metadata",
+        "changes": [
+          {
+            "kind": "add_column",
+            "resource": "public.accounts.display_name",
+            "safety": "online"
+          }
+        ]
+      },
+      "statements": [
+        {
+          "ordinal": 1,
+          "sql": "ALTER TABLE public.accounts ADD COLUMN display_name text",
+          "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        }
+      ],
+      "preconditions": [],
+      "postconditions": []
+    }
+  ]
+}

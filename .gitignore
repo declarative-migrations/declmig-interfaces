@@ -9,4 +9,5 @@
 !.env.example
 *.sqlite
 Cargo.lock
-
+/typespec/node_modules
+/typespec/tsp-output

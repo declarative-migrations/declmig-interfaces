@@ -1,6 +1,5 @@
 name: declmig_interfaces
 description: Generated data-only interfaces for Declarative Migrations
-version: 0.1.0
+version: 0.2.0
 environment:
   sdk: ">=3.4.0 <4.0.0"
-
