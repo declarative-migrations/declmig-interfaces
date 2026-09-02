@@ -1,0 +1,32 @@
+{
+  "format": "authority-parity-report/v1",
+  "auditDate": "2026-09-02",
+  "scope": "declmig-interfaces/main at audit time",
+  "contractRevision": "current-main",
+  "decision": "pause",
+  "stage": "generated",
+  "missingArtifacts": [
+    "typespec-source",
+    "typespec-postgresql-sql",
+    "typespec-cockroachdb-sql",
+    "typespec-protobuf",
+    "typespec-grpc",
+    "typespec-type-operation-manifest"
+  ],
+  "observations": [
+    "A JSON Schema-led v1 MigrationPlan contract is present.",
+    "No independent TypeSpec authority lane is present.",
+    "MigrationPlan payload is structurally unbounded, so migration phase semantics cannot yet be compared."
+  ],
+  "requiredEvaluation": [
+    "TypeSpec SQL mapping profile and custom emitter boundary",
+    "optional versus nullable mapping",
+    "integer, decimal, identifier, timestamp, enum, default, key, relationship, and operation mappings",
+    "versioned replacement path for the v1 untyped payload"
+  ],
+  "releaseEffect": [
+    "Do not claim TypeSpec and JSON Schema/OpenAPI parity.",
+    "Do not substitute JSON Schema/OpenAPI output for missing TypeSpec artifacts.",
+    "Do not use peer-authority certification as a green production release signal until a clean report says proceed."
+  ]
+}
