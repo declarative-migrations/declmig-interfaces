@@ -56,7 +56,7 @@ jobs:
           npm run generate
       - name: Type-check generated TypeScript
         run: >-
-          npx --yes typescript@5.8.3
+          npx --yes --package=typescript@5.8.3 tsc
           --noEmit
           --strict
           --target ES2022
