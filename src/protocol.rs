@@ -241,8 +241,7 @@ impl MigrationPlan {
     /// Returns [`InterfaceError::SchemaMismatch`] when JSON decoding fails and
     /// a field-specific error when semantic plan invariants are violated.
     pub fn from_json(input: &str) -> Result<Self, InterfaceError> {
-        let plan: Self =
-            serde_json::from_str(input).map_err(|_| InterfaceError::SchemaMismatch)?;
+        let plan: Self = serde_json::from_str(input).map_err(|_| InterfaceError::SchemaMismatch)?;
         plan.validate()?;
         Ok(plan)
     }
@@ -325,10 +324,7 @@ impl MigrationPhase {
                 validate_checks(&phase.postconditions)
             }
             Self::DataBackfill(phase) => {
-                require_sha256(
-                    &phase.worker_artifact_sha256,
-                    "worker_artifact_sha256",
-                )?;
+                require_sha256(&phase.worker_artifact_sha256, "worker_artifact_sha256")?;
                 require_non_empty(&phase.batch_key, "batch_key")?;
                 if phase.max_batch_size == 0 {
                     return Err(InterfaceError::InvalidPhase(
@@ -430,16 +426,12 @@ fn validate_checks(checks: &[MigrationCheck]) -> Result<(), InterfaceError> {
     for check in checks {
         require_non_empty(&check.name, "check.name")?;
         require_non_empty(&check.sql, "check.sql")?;
-        if check.expectation == CheckExpectation::ScalarEquals
-            && check.expected_value.is_none()
-        {
+        if check.expectation == CheckExpectation::ScalarEquals && check.expected_value.is_none() {
             return Err(InterfaceError::InvalidPhase(
                 "scalar_equals checks require expected_value",
             ));
         }
-        if check.expectation != CheckExpectation::ScalarEquals
-            && check.expected_value.is_some()
-        {
+        if check.expectation != CheckExpectation::ScalarEquals && check.expected_value.is_some() {
             return Err(InterfaceError::InvalidPhase(
                 "expected_value is allowed only for scalar_equals checks",
             ));
@@ -512,14 +504,12 @@ mod tests {
             source_catalog_sha256: digest('a'),
             desired_catalog_sha256: digest('b'),
             rendered_sql_sha256: digest('c'),
-            phases: vec![MigrationPhase::TransactionalDdl(
-                TransactionalDdlPhase {
-                    metadata: metadata("expand"),
-                    statements: vec![statement()],
-                    preconditions: vec![],
-                    postconditions: vec![],
-                },
-            )],
+            phases: vec![MigrationPhase::TransactionalDdl(TransactionalDdlPhase {
+                metadata: metadata("expand"),
+                statements: vec![statement()],
+                preconditions: vec![],
+                postconditions: vec![],
+            })],
         }
     }
 
