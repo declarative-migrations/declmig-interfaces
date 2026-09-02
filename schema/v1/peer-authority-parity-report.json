@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/declarative-migrations/declmig-interfaces/schema/v1/peer-authority-parity-report.json",
+  "title": "Peer Authority Parity Report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "contractRevision", "decision", "artifacts", "discrepancies"],
+  "properties": {
+    "format": {"const": "authority-parity-report/v1"},
+    "contractRevision": {"type": "string", "minLength": 1},
+    "decision": {"enum": ["proceed", "pause"]},
+    "artifacts": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/artifactIdentity"}
+    },
+    "discrepancies": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/discrepancy"}
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"decision": {"const": "proceed"}}},
+      "then": {"properties": {"discrepancies": {"maxItems": 0}}}
+    },
+    {
+      "if": {"properties": {"decision": {"const": "pause"}}},
+      "then": {"properties": {"discrepancies": {"minItems": 1}}}
+    }
+  ],
+  "$defs": {
+    "artifactIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "kind", "sourceSha256", "generator", "generatorVersion", "artifactSha256"],
+      "properties": {
+        "authority": {"enum": ["typeSpec", "jsonSchemaOpenApi"]},
+        "kind": {"enum": ["sql", "typeManifest", "protobuf", "grpc", "wireClient", "interfaceTypes", "validator", "writeClient"]},
+        "sourceSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "generator": {"type": "string", "minLength": 1},
+        "generatorVersion": {"type": "string", "minLength": 1},
+        "artifactSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "discrepancy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "artifactKind", "path", "message"],
+      "properties": {
+        "kind": {"enum": ["missingArtifact", "invalidArtifact", "generatorFailure", "unsupportedConstruct", "semanticMismatch"]},
+        "artifactKind": {"enum": ["sql", "typeManifest", "protobuf", "grpc", "wireClient", "interfaceTypes", "validator", "writeClient"]},
+        "path": {"type": "string", "minLength": 1},
+        "typeSpec": true,
+        "jsonSchemaOpenApi": true,
+        "message": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
