@@ -113,8 +113,7 @@ void _validatePhase(MigrationPhase phase, DatabaseEngine engine) {
     return;
   }
   if (phase is DestructiveCleanupPhase) {
-    if (phase.metadata.approval !=
-        ApprovalRequirement.destructiveOperator) {
+    if (phase.metadata.approval != ApprovalRequirement.destructiveOperator) {
       _invalidPhase(
         'destructive_cleanup requires destructive_operator approval',
       );
