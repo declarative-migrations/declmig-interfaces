@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/declarative-migrations/declmig-interfaces/schema/v1/peer-authority-certification.json",
+  "title": "PeerAuthorityCertification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "decision",
+    "decisionEligible",
+    "policy",
+    "comparisons",
+    "inputs"
+  ],
+  "properties": {
+    "format": {
+      "const": "declmig.peer-authority-certification/v1"
+    },
+    "decision": {
+      "enum": ["continue", "pause"]
+    },
+    "decisionEligible": {
+      "type": "boolean"
+    },
+    "policy": {
+      "$ref": "#/$defs/policy"
+    },
+    "comparisons": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/comparison"
+      }
+    },
+    "inputs": {
+      "$ref": "#/$defs/inputs"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-fA-F]{64}$"
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "automaticWinner",
+        "onDiscrepancy",
+        "requiredComparisons"
+      ],
+      "properties": {
+        "automaticWinner": {
+          "const": false
+        },
+        "onDiscrepancy": {
+          "const": "pause-and-evaluate"
+        },
+        "requiredComparisons": {
+          "const": [
+            "typespec-vs-json-schema-openapi-sql-catalog",
+            "typespec-vs-json-schema-openapi-generated-types",
+            "seaorm-vs-diesel-orm-projection"
+          ]
+        }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "left",
+        "right",
+        "status",
+        "evidenceSha256"
+      ],
+      "properties": {
+        "kind": {
+          "enum": ["sql-catalog", "generated-types", "orm-projection"]
+        },
+        "left": {
+          "type": "string",
+          "minLength": 1
+        },
+        "right": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": ["pass", "discrepancy", "missing", "error"]
+        },
+        "toolExitCode": {
+          "type": "integer"
+        },
+        "message": {
+          "type": ["string", "null"]
+        },
+        "evidenceSha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dpmSha256",
+        "typespecSqlSha256",
+        "jsonSchemaOpenApiSqlSha256",
+        "typespecTypesSha256",
+        "jsonSchemaOpenApiTypesSha256",
+        "seaOrmProjectionSha256",
+        "dieselProjectionSha256"
+      ],
+      "properties": {
+        "dpmSha256": {"$ref": "#/$defs/sha256"},
+        "typespecSqlSha256": {"$ref": "#/$defs/sha256"},
+        "jsonSchemaOpenApiSqlSha256": {"$ref": "#/$defs/sha256"},
+        "typespecTypesSha256": {"$ref": "#/$defs/sha256"},
+        "jsonSchemaOpenApiTypesSha256": {"$ref": "#/$defs/sha256"},
+        "seaOrmProjectionSha256": {"$ref": "#/$defs/sha256"},
+        "dieselProjectionSha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}
