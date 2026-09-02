@@ -387,7 +387,7 @@ fn validate_metadata(
             && change
                 .manual_reason
                 .as_deref()
-                .map_or(true, |reason| reason.trim().is_empty())
+                .is_none_or(|reason| reason.trim().is_empty())
         {
             return Err(InterfaceError::InvalidPhase(
                 "manual_review changes require manual_reason",
@@ -465,7 +465,7 @@ mod tests {
     use super::*;
 
     fn digest(character: char) -> String {
-        std::iter::repeat(character).take(64).collect()
+        std::iter::repeat_n(character, 64).collect()
     }
 
     fn metadata(id: &str) -> PhaseMetadata {
