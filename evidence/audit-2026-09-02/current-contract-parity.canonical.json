@@ -1,0 +1,45 @@
+{
+  "format": "authority-parity-report/v1",
+  "contractRevision": "current-main",
+  "decision": "pause",
+  "artifacts": [],
+  "discrepancies": [
+    {
+      "kind": "missingArtifact",
+      "artifactKind": "sql",
+      "path": "$.authorities.typeSpec.outputs.postgresqlSql",
+      "message": "No independent TypeSpec-generated PostgreSQL SQL candidate is present."
+    },
+    {
+      "kind": "missingArtifact",
+      "artifactKind": "sql",
+      "path": "$.authorities.typeSpec.outputs.cockroachDbSql",
+      "message": "No independent TypeSpec-generated CockroachDB SQL candidate is present."
+    },
+    {
+      "kind": "missingArtifact",
+      "artifactKind": "protobuf",
+      "path": "$.authorities.typeSpec.outputs.protobuf",
+      "message": "No pinned TypeSpec-generated Protobuf artifact is present."
+    },
+    {
+      "kind": "missingArtifact",
+      "artifactKind": "grpc",
+      "path": "$.authorities.typeSpec.outputs.grpc",
+      "message": "No pinned TypeSpec-generated gRPC artifact is present."
+    },
+    {
+      "kind": "missingArtifact",
+      "artifactKind": "typeManifest",
+      "path": "$.authorities.typeSpec.outputs.typeOperationManifest",
+      "message": "No canonical TypeSpec type/operation manifest is present, so semantic type parity cannot be certified."
+    },
+    {
+      "kind": "unsupportedConstruct",
+      "artifactKind": "typeManifest",
+      "path": "$.types.MigrationPlan.payload",
+      "jsonSchemaOpenApi": {},
+      "message": "The current v1 payload is unconstrained and cannot express closed migration phase semantics for peer comparison."
+    }
+  ]
+}
