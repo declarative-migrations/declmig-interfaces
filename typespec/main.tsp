@@ -25,7 +25,7 @@ enum SafetyClass {
 }
 
 enum RetryClass {
-  never,
+  neverRetry: "never",
   idempotent,
   serializableRestart: "serializable_restart",
   replanRequired: "replan_required",
