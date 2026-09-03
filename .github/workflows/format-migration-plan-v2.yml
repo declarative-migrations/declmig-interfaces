@@ -121,17 +121,33 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
           rm .github/workflows/format-migration-plan-v2.yml
-          mapfile -t changed < <(git status --porcelain | sed 's/^...//' | sort)
-          expected=(
-            .github/workflows/format-migration-plan-v2.yml
-            Cargo.lock
-            src/lib.rs
-            src/migration_plan_v2.rs
+          mapfile -t changed < <(git status --porcelain | sed -E 's/^.. //' | sort)
+          printf 'changed path: %s\n' "${changed[@]}"
+          for path in "${changed[@]}"; do
+            case "$path" in
+              .github/workflows/format-migration-plan-v2.yml|Cargo.lock|src/lib.rs|src/migration_plan_v2.rs|tests/migration_plan_v2.rs)
+                ;;
+              *)
+                echo "unexpected changed path: $path" >&2
+                exit 1
+                ;;
+            esac
+          done
+          for required in \
+            .github/workflows/format-migration-plan-v2.yml \
+            Cargo.lock \
+            src/migration_plan_v2.rs \
             tests/migration_plan_v2.rs
-          )
-          test "${changed[*]}" = "${expected[*]}"
+          do
+            printf '%s\n' "${changed[@]}" | grep -Fx "$required" >/dev/null
+          done
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- "${expected[@]}"
+          git add -- \
+            .github/workflows/format-migration-plan-v2.yml \
+            Cargo.lock \
+            src/lib.rs \
+            src/migration_plan_v2.rs \
+            tests/migration_plan_v2.rs
           git commit -m 'build: lock and format typed migration-plan v2 contract'
           git push origin "HEAD:$TARGET_BRANCH"
