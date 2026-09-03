@@ -50,71 +50,74 @@ jobs:
           python3 - <<'PY'
           from __future__ import annotations
 
+          import re
           from pathlib import Path
 
-          def replace_once(path: str, old: str, new: str) -> None:
+          def replace_once(path: str, old: str, new: str, label: str) -> None:
               file = Path(path)
               text = file.read_text(encoding='utf-8')
               count = text.count(old)
               if count != 1:
-                  raise SystemExit(f'{path}: expected one guarded replacement, found {count}')
+                  raise SystemExit(f'{label}: expected one literal match, found {count}')
               file.write_text(text.replace(old, new, 1), encoding='utf-8')
+              print(f'patched {label}')
 
+          def regex_once(path: str, pattern: str, replacement: str, label: str) -> None:
+              file = Path(path)
+              text = file.read_text(encoding='utf-8')
+              updated, count = re.subn(pattern, replacement, text, count=1, flags=re.MULTILINE)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected one regex match, found {count}')
+              file.write_text(updated, encoding='utf-8')
+              print(f'patched {label}')
+
+          source = 'src/migration_plan_v2.rs'
           replace_once(
-              'src/migration_plan_v2.rs',
+              source,
               'use serde::{Deserialize, Serialize};\n',
               'use serde::{Deserialize, Serialize};\nuse sha2::{Digest, Sha256};\n',
+              'source sha2 import',
           )
           replace_once(
-              'src/migration_plan_v2.rs',
-              '''        require_non_empty(&statement.sql, "statement.sql")?;
-                  require_sha256(&statement.sha256, "statement.sha256")?;
-              ''',
-              '''        require_non_empty(&statement.sql, "statement.sql")?;
-                  require_sha256(&statement.sha256, "statement.sha256")?;
+              source,
+              '        require_sha256(&statement.sha256, "statement.sha256")?;\n',
+              '''        require_sha256(&statement.sha256, "statement.sha256")?;
                   if statement.sha256 != sha256_hex(&statement.sql) {
                       return Err(MigrationPlanV2Error::InvalidPhase(
                           "statement.sha256 must match statement.sql",
                       ));
                   }
               ''',
+              'statement digest enforcement',
           )
           replace_once(
-              'src/migration_plan_v2.rs',
-              '''fn require_non_empty(value: &str, field: &'static str) -> Result<(), MigrationPlanV2Error> {
-              ''',
+              source,
+              "fn require_non_empty(value: &str, field: &'static str) -> Result<(), MigrationPlanV2Error> {\n",
               '''fn sha256_hex(value: &str) -> String {
                   format!("{:x}", Sha256::digest(value.as_bytes()))
               }
 
               fn require_non_empty(value: &str, field: &'static str) -> Result<(), MigrationPlanV2Error> {
               ''',
+              'sha256 helper',
+          )
+          regex_once(
+              source,
+              r'''    fn statement\(\) -> MigrationStatement \{\n        MigrationStatement \{\n            ordinal: 1,\n            sql: "ALTER TABLE public\.accounts ADD COLUMN display_name text"\.to_owned\(\),\n            sha256: digest\('d'\),\n        \}\n    \}\n''',
+              '''    fn statement() -> MigrationStatement {
+                  let sql = "ALTER TABLE public.accounts ADD COLUMN display_name text";
+                  MigrationStatement {
+                      ordinal: 1,
+                      sql: sql.to_owned(),
+                      sha256: sha256_hex(sql),
+                  }
+              }
+              ''',
+              'source statement fixture',
           )
           replace_once(
-              'src/migration_plan_v2.rs',
-              '''    fn statement() -> MigrationStatement {
-                      MigrationStatement {
-                          ordinal: 1,
-                          sql: "ALTER TABLE public.accounts ADD COLUMN display_name text".to_owned(),
-                          sha256: digest('d'),
-                      }
-                  }
-              ''',
-              '''    fn statement() -> MigrationStatement {
-                      let sql = "ALTER TABLE public.accounts ADD COLUMN display_name text";
-                      MigrationStatement {
-                          ordinal: 1,
-                          sql: sql.to_owned(),
-                          sha256: sha256_hex(sql),
-                      }
-                  }
-              ''',
-          )
-          replace_once(
-              'src/migration_plan_v2.rs',
-              '''    #[test]
-                  fn rejects_non_lowercase_sha256() {
-              ''',
+              source,
+              '    #[test]\n    fn rejects_non_lowercase_sha256() {\n',
               '''    #[test]
                   fn rejects_statement_digest_that_does_not_match_sql() {
                       let mut plan = valid_plan();
@@ -133,15 +136,18 @@ jobs:
                   #[test]
                   fn rejects_non_lowercase_sha256() {
               ''',
+              'source tamper test',
           )
 
+          public_test = 'tests/migration_plan_v2.rs'
           replace_once(
-              'tests/migration_plan_v2.rs',
+              public_test,
               'use serde_json::json;\n',
               'use serde_json::json;\nuse sha2::{Digest, Sha256};\n',
+              'public test sha2 import',
           )
           replace_once(
-              'tests/migration_plan_v2.rs',
+              public_test,
               '''fn digest(character: char) -> String {
                   std::iter::repeat_n(character, 64).collect()
               }
@@ -154,18 +160,19 @@ jobs:
                   format!("{:x}", Sha256::digest(sql.as_bytes()))
               }
               ''',
+              'public statement digest helper',
           )
           replace_once(
-              'tests/migration_plan_v2.rs',
-              '''                sha256: digest('d'),
-              ''',
+              public_test,
+              "                sha256: digest('d'),\n",
               '''                sha256: statement_sha256(
                                   "ALTER TABLE public.accounts ADD COLUMN display_name text",
                               ),
               ''',
+              'public valid statement digest',
           )
           replace_once(
-              'tests/migration_plan_v2.rs',
+              public_test,
               '''    let mut plan = typed_plan();
                   plan.rendered_sql_sha256 = "not-a-digest".to_owned();
               ''',
@@ -184,23 +191,19 @@ jobs:
                   let mut plan = typed_plan();
                   plan.rendered_sql_sha256 = "not-a-digest".to_owned();
               ''',
+              'public tamper assertion',
           )
 
+          adversarial = 'tests/migration_plan_v2_adversarial.rs'
           replace_once(
-              'tests/migration_plan_v2_adversarial.rs',
+              adversarial,
               'use serde_json::Value;\n',
               'use serde_json::Value;\nuse sha2::{Digest, Sha256};\n',
+              'adversarial sha2 import',
           )
-          replace_once(
-              'tests/migration_plan_v2_adversarial.rs',
-              '''fn statement(ordinal: u32, sql: &str, digest_character: char) -> MigrationStatement {
-                  MigrationStatement {
-                      ordinal,
-                      sql: sql.to_owned(),
-                      sha256: digest(digest_character),
-                  }
-              }
-              ''',
+          regex_once(
+              adversarial,
+              r'''fn statement\(ordinal: u32, sql: &str, digest_character: char\) -> MigrationStatement \{\n    MigrationStatement \{\n        ordinal,\n        sql: sql\.to_owned\(\),\n        sha256: digest\(digest_character\),\n    \}\n\}\n''',
               '''fn statement(ordinal: u32, sql: &str, _digest_character: char) -> MigrationStatement {
                   MigrationStatement {
                       ordinal,
@@ -209,13 +212,14 @@ jobs:
                   }
               }
               ''',
+              'adversarial statement fixture',
           )
           replace_once(
-              'tests/migration_plan_v2_adversarial.rs',
-              '''    let mut plan = all_phase_plan();
-                  let MigrationPhase::Validation(phase) = &mut plan.phases[4] else {
-              ''',
-              '''    let mut plan = all_phase_plan();
+              adversarial,
+              '#[test]\nfn rejects_backfill_validation_traffic_and_cleanup_ambiguity() {\n',
+              '''#[test]
+              fn rejects_statement_digest_tampering() {
+                  let mut plan = all_phase_plan();
                   let MigrationPhase::TransactionalDdl(phase) = &mut plan.phases[0] else {
                       panic!("fixture phase order changed");
                   };
@@ -226,10 +230,12 @@ jobs:
                           "statement.sha256 must match statement.sql"
                       ))
                   );
+              }
 
-                  let mut plan = all_phase_plan();
-                  let MigrationPhase::Validation(phase) = &mut plan.phases[4] else {
+              #[test]
+              fn rejects_backfill_validation_traffic_and_cleanup_ambiguity() {
               ''',
+              'adversarial digest tamper test',
           )
           PY
           cargo +1.88.0 fmt --all
