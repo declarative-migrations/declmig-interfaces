@@ -12,6 +12,7 @@ use std::collections::BTreeSet;
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 
 /// Protocol revision carried by typed migration-plan v2 consumers.
 pub const MIGRATION_PLAN_PROTOCOL_VERSION: &str = "2";
@@ -422,6 +423,11 @@ fn validate_statements(statements: &[MigrationStatement]) -> Result<(), Migratio
         }
         require_non_empty(&statement.sql, "statement.sql")?;
         require_sha256(&statement.sha256, "statement.sha256")?;
+        if statement.sha256 != sha256_hex(&statement.sql) {
+            return Err(MigrationPlanV2Error::InvalidPhase(
+                "statement.sha256 must match statement.sql",
+            ));
+        }
     }
     Ok(())
 }
@@ -442,6 +448,10 @@ fn validate_checks(checks: &[MigrationCheck]) -> Result<(), MigrationPlanV2Error
         }
     }
     Ok(())
+}
+
+fn sha256_hex(value: &str) -> String {
+    format!("{:x}", Sha256::digest(value.as_bytes()))
 }
 
 fn require_non_empty(value: &str, field: &'static str) -> Result<(), MigrationPlanV2Error> {
@@ -527,10 +537,11 @@ mod tests {
     }
 
     fn statement() -> MigrationStatement {
+        let sql = "ALTER TABLE public.accounts ADD COLUMN display_name text";
         MigrationStatement {
             ordinal: 1,
-            sql: "ALTER TABLE public.accounts ADD COLUMN display_name text".to_owned(),
-            sha256: digest('d'),
+            sql: sql.to_owned(),
+            sha256: sha256_hex(sql),
         }
     }
 
@@ -601,6 +612,21 @@ mod tests {
             plan.validate(),
             Err(MigrationPlanV2Error::InvalidPhase(
                 "destructive changes must use destructive_cleanup"
+            ))
+        );
+    }
+
+    #[test]
+    fn rejects_statement_digest_that_does_not_match_sql() {
+        let mut plan = valid_plan();
+        let MigrationPhase::TransactionalDdl(phase) = &mut plan.phases[0] else {
+            panic!("test fixture changed");
+        };
+        phase.statements[0].sql.push_str(" -- tampered");
+        assert_eq!(
+            plan.validate(),
+            Err(MigrationPlanV2Error::InvalidPhase(
+                "statement.sha256 must match statement.sql"
             ))
         );
     }

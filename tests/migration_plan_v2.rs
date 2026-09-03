@@ -8,9 +8,14 @@ use declmig_interfaces::{
     MIGRATION_PLAN_PROTOCOL_VERSION, PROTOCOL_VERSION,
 };
 use serde_json::json;
+use sha2::{Digest, Sha256};
 
 fn digest(character: char) -> String {
     std::iter::repeat_n(character, 64).collect()
+}
+
+fn statement_sha256(sql: &str) -> String {
+    format!("{:x}", Sha256::digest(sql.as_bytes()))
 }
 
 fn typed_plan() -> MigrationPlanV2 {
@@ -42,7 +47,9 @@ fn typed_plan() -> MigrationPlanV2 {
             statements: vec![MigrationStatement {
                 ordinal: 1,
                 sql: "ALTER TABLE public.accounts ADD COLUMN display_name text".to_owned(),
-                sha256: digest('d'),
+                sha256: statement_sha256(
+                    "ALTER TABLE public.accounts ADD COLUMN display_name text",
+                ),
             }],
             preconditions: vec![],
             postconditions: vec![],
@@ -73,6 +80,18 @@ fn public_v2_contract_fails_closed_on_unsafe_or_ambiguous_input() {
     let mut plan = typed_plan();
     plan.phases.push(plan.phases[0].clone());
     assert_eq!(plan.validate(), Err(MigrationPlanV2Error::DuplicatePhaseId));
+
+    let mut plan = typed_plan();
+    let MigrationPhase::TransactionalDdl(phase) = &mut plan.phases[0] else {
+        panic!("test fixture changed");
+    };
+    phase.statements[0].sql.push_str(" -- modified");
+    assert_eq!(
+        plan.validate(),
+        Err(MigrationPlanV2Error::InvalidPhase(
+            "statement.sha256 must match statement.sql"
+        ))
+    );
 
     let mut plan = typed_plan();
     plan.rendered_sql_sha256 = "not-a-digest".to_owned();

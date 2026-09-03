@@ -8,6 +8,7 @@ use declmig_interfaces::migration_plan_v2::{
 };
 use declmig_interfaces::{MigrationPlanV2, MigrationPlanV2Error, MIGRATION_PLAN_FORMAT};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 
 fn digest(character: char) -> String {
     std::iter::repeat_n(character, 64).collect()
@@ -41,11 +42,11 @@ fn metadata(
     }
 }
 
-fn statement(ordinal: u32, sql: &str, digest_character: char) -> MigrationStatement {
+fn statement(ordinal: u32, sql: &str, _digest_character: char) -> MigrationStatement {
     MigrationStatement {
         ordinal,
         sql: sql.to_owned(),
-        sha256: digest(digest_character),
+        sha256: format!("{:x}", Sha256::digest(sql.as_bytes())),
     }
 }
 
@@ -279,6 +280,21 @@ fn rejects_statement_and_check_ambiguity() {
         plan.validate(),
         Err(MigrationPlanV2Error::InvalidPhase(
             "expected_value is allowed only for scalar_equals checks"
+        ))
+    );
+}
+
+#[test]
+fn rejects_statement_digest_tampering() {
+    let mut plan = all_phase_plan();
+    let MigrationPhase::TransactionalDdl(phase) = &mut plan.phases[0] else {
+        panic!("fixture phase order changed");
+    };
+    phase.statements[0].sha256 = digest('0');
+    assert_eq!(
+        plan.validate(),
+        Err(MigrationPlanV2Error::InvalidPhase(
+            "statement.sha256 must match statement.sql"
         ))
     );
 }
