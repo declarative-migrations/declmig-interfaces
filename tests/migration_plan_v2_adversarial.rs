@@ -1,11 +1,10 @@
 #![allow(clippy::too_many_lines)]
 
 use declmig_interfaces::migration_plan_v2::{
-    ApprovalRequirement, ChangeKind, CheckExpectation, CockroachSchemaJobPhase,
-    DataBackfillPhase, DatabaseEngine, DestructiveCleanupPhase, LockExpectation,
-    MigrationChange, MigrationCheck, MigrationPhase, MigrationStatement,
-    NonTransactionalDdlPhase, PhaseMetadata, RetryClass, RollbackClass, SafetyClass,
-    TrafficTransitionPhase, TransactionalDdlPhase, ValidationPhase,
+    ApprovalRequirement, ChangeKind, CheckExpectation, CockroachSchemaJobPhase, DataBackfillPhase,
+    DatabaseEngine, DestructiveCleanupPhase, LockExpectation, MigrationChange, MigrationCheck,
+    MigrationPhase, MigrationStatement, NonTransactionalDdlPhase, PhaseMetadata, RetryClass,
+    RollbackClass, SafetyClass, TrafficTransitionPhase, TransactionalDdlPhase, ValidationPhase,
 };
 use declmig_interfaces::{MigrationPlanV2, MigrationPlanV2Error, MIGRATION_PLAN_FORMAT};
 use serde_json::Value;
@@ -105,8 +104,7 @@ fn all_phase_plan() -> MigrationPlanV2 {
                     "CREATE INDEX CONCURRENTLY accounts_id_idx ON public.accounts (id)",
                     'e',
                 )],
-                cleanup_on_failure: "DROP INDEX CONCURRENTLY IF EXISTS accounts_id_idx"
-                    .to_owned(),
+                cleanup_on_failure: "DROP INDEX CONCURRENTLY IF EXISTS accounts_id_idx".to_owned(),
                 preconditions: vec![],
                 postconditions: vec![check(CheckExpectation::BooleanTrue, None)],
             }),
@@ -200,7 +198,9 @@ fn all_phase_plan() -> MigrationPlanV2 {
 #[test]
 fn round_trips_every_phase_variant_with_stable_tags() {
     let expected = all_phase_plan();
-    expected.validate().expect("all phase variants must validate");
+    expected
+        .validate()
+        .expect("all phase variants must validate");
 
     let json = serde_json::to_string(&expected).expect("serialize all-phase plan");
     let actual = MigrationPlanV2::from_json(&json).expect("parse all-phase plan");
@@ -380,9 +380,7 @@ fn rejects_plan_phase_and_manual_review_identity_errors() {
     plan.rendered_sql_sha256 = digest('A');
     assert_eq!(
         plan.validate(),
-        Err(MigrationPlanV2Error::InvalidSha256(
-            "rendered_sql_sha256"
-        ))
+        Err(MigrationPlanV2Error::InvalidSha256("rendered_sql_sha256"))
     );
 
     let mut plan = all_phase_plan();
