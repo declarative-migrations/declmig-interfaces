@@ -8,7 +8,6 @@ on:
       - 'tests/migration_plan_v2.rs'
       - 'docs/typed-migration-plan-v2.md'
       - 'Cargo.toml'
-      - 'Cargo.lock'
       - '.github/workflows/migration-plan-v2.yml'
 
 permissions:
@@ -51,14 +50,15 @@ jobs:
         run: |
           set -euo pipefail
           cargo +1.88.0 fmt --all -- --check
-          cargo +1.88.0 test --locked --all-targets
-          cargo +1.88.0 clippy --locked --all-targets -- -D warnings
-          cargo +1.88.0 build --locked --release
+          cargo +1.88.0 test --all-targets
+          cargo +1.88.0 clippy --all-targets -- -D warnings
+          cargo +1.88.0 build --release
 
       - name: Enforce the salvage and authority boundary
         shell: bash
         run: |
           set -euo pipefail
+          test ! -e Cargo.lock
           test ! -e schema/v2/migrationplan.json
           grep -Fq 'pub const PROTOCOL_VERSION: &str = "1";' src/protocol.rs
           grep -Fq 'pub const MIGRATION_PLAN_PROTOCOL_VERSION: &str = "2";' src/migration_plan_v2.rs
