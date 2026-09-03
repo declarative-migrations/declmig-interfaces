@@ -43,7 +43,7 @@ jobs:
           rustup toolchain install 1.88.0 --profile minimal --component rustfmt,clippy
           test "$(rustc +1.88.0 --version | awk '{print $2}')" = '1.88.0'
 
-      - name: Generate the missing lock, format, and validate
+      - name: Generate the missing lock, repair lints, format, and validate
         shell: bash
         run: |
           set -euo pipefail
@@ -75,6 +75,35 @@ jobs:
               checksum = package.get('checksum')
               if not isinstance(checksum, str) or len(checksum) != 64:
                   raise SystemExit('registry package is missing a SHA-256 checksum')
+
+          def replace_exact(path: str, old: str, new: str, expected_count: int) -> None:
+              file = Path(path)
+              text = file.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != expected_count:
+                  raise SystemExit(
+                      f'{path}: expected {expected_count} occurrences of lint pattern, found {count}'
+                  )
+              file.write_text(text.replace(old, new), encoding='utf-8')
+
+          replace_exact(
+              'src/migration_plan_v2.rs',
+              '.map_or(true, |reason| reason.trim().is_empty())',
+              '.is_none_or(|reason| reason.trim().is_empty())',
+              1,
+          )
+          replace_exact(
+              'src/migration_plan_v2.rs',
+              'std::iter::repeat(character).take(64).collect()',
+              'std::iter::repeat_n(character, 64).collect()',
+              1,
+          )
+          replace_exact(
+              'tests/migration_plan_v2.rs',
+              'std::iter::repeat(character).take(64).collect()',
+              'std::iter::repeat_n(character, 64).collect()',
+              1,
+          )
           PY
           cargo +1.88.0 fmt --all
           cargo +1.88.0 test --locked --all-targets
