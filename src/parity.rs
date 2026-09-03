@@ -5,8 +5,7 @@ use std::collections::BTreeSet;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-pub const PEER_AUTHORITY_CERTIFICATION_FORMAT: &str =
-    "declmig.peer-authority-certification/v1";
+pub const PEER_AUTHORITY_CERTIFICATION_FORMAT: &str = "declmig.peer-authority-certification/v1";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -162,14 +161,13 @@ impl PeerAuthorityCertification {
         expires_at_unix_seconds: u64,
     ) -> Self {
         comparisons.sort_by_key(|item| item.kind);
-        let decision_eligible = validity_window_is_well_formed(
-            issued_at_unix_seconds,
-            expires_at_unix_seconds,
-        ) && comparison_set_passes(&comparisons)
-            && comparisons
-                .iter()
-                .all(|item| item.evidence_sha256.as_deref().is_some_and(is_sha256))
-            && inputs.all_present_and_valid();
+        let decision_eligible =
+            validity_window_is_well_formed(issued_at_unix_seconds, expires_at_unix_seconds)
+                && comparison_set_passes(&comparisons)
+                && comparisons
+                    .iter()
+                    .all(|item| item.evidence_sha256.as_deref().is_some_and(is_sha256))
+                && inputs.all_present_and_valid();
 
         Self {
             format: PEER_AUTHORITY_CERTIFICATION_FORMAT.to_owned(),
@@ -257,9 +255,7 @@ fn validity_window_is_well_formed(issued_at: u64, expires_at: u64) -> bool {
 }
 
 fn validity_window_contains(issued_at: u64, expires_at: u64, now: u64) -> bool {
-    validity_window_is_well_formed(issued_at, expires_at)
-        && issued_at <= now
-        && now < expires_at
+    validity_window_is_well_formed(issued_at, expires_at) && issued_at <= now && now < expires_at
 }
 
 fn is_canonical_identity(value: &str) -> bool {
@@ -463,12 +459,7 @@ mod tests {
             ISSUED_AT,
             EXPIRES_AT,
         );
-        let right = PeerAuthorityCertification::evaluate(
-            reversed,
-            inputs(),
-            ISSUED_AT,
-            EXPIRES_AT,
-        );
+        let right = PeerAuthorityCertification::evaluate(reversed, inputs(), ISSUED_AT, EXPIRES_AT);
 
         let left_digest = left.canonical_sha256().expect("serialize certificate");
         let right_digest = right.canonical_sha256().expect("serialize certificate");
