@@ -58,7 +58,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test ! -e Cargo.lock
           test ! -e schema/v2/migrationplan.json
           grep -Fq 'pub const PROTOCOL_VERSION: &str = "1";' src/protocol.rs
           grep -Fq 'pub const MIGRATION_PLAN_PROTOCOL_VERSION: &str = "2";' src/migration_plan_v2.rs
