@@ -391,7 +391,7 @@ fn validate_metadata(
             && change
                 .manual_reason
                 .as_deref()
-                .map_or(true, |reason| reason.trim().is_empty())
+                .is_none_or(|reason| reason.trim().is_empty())
         {
             return Err(MigrationPlanV2Error::InvalidPhase(
                 "manual_review changes require manual_reason",
@@ -406,9 +406,7 @@ fn validate_metadata(
     Ok(())
 }
 
-fn validate_statements(
-    statements: &[MigrationStatement],
-) -> Result<(), MigrationPlanV2Error> {
+fn validate_statements(statements: &[MigrationStatement]) -> Result<(), MigrationPlanV2Error> {
     if statements.is_empty() {
         return Err(MigrationPlanV2Error::InvalidPhase(
             "DDL phase requires at least one statement",
@@ -483,7 +481,10 @@ impl fmt::Display for MigrationPlanV2Error {
             Self::InvalidFormat => formatter.write_str("migration plan format is unsupported"),
             Self::EmptyField(field) => write!(formatter, "{field} must be non-empty"),
             Self::InvalidSha256(field) => {
-                write!(formatter, "{field} must be a lowercase hexadecimal SHA-256 digest")
+                write!(
+                    formatter,
+                    "{field} must be a lowercase hexadecimal SHA-256 digest"
+                )
             }
             Self::EmptyPhases => {
                 formatter.write_str("migration plan must contain at least one phase")
@@ -492,9 +493,7 @@ impl fmt::Display for MigrationPlanV2Error {
             Self::InvalidPhase(reason) => {
                 write!(formatter, "migration phase is invalid: {reason}")
             }
-            Self::SchemaMismatch => {
-                formatter.write_str("payload does not match migration-plan v2")
-            }
+            Self::SchemaMismatch => formatter.write_str("payload does not match migration-plan v2"),
         }
     }
 }
@@ -506,7 +505,7 @@ mod tests {
     use super::*;
 
     fn digest(character: char) -> String {
-        std::iter::repeat(character).take(64).collect()
+        std::iter::repeat_n(character, 64).collect()
     }
 
     fn metadata(id: &str) -> PhaseMetadata {
@@ -612,9 +611,7 @@ mod tests {
         plan.source_catalog_sha256 = digest('A');
         assert_eq!(
             plan.validate(),
-            Err(MigrationPlanV2Error::InvalidSha256(
-                "source_catalog_sha256"
-            ))
+            Err(MigrationPlanV2Error::InvalidSha256("source_catalog_sha256"))
         );
     }
 

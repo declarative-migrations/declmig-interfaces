@@ -10,7 +10,7 @@ use declmig_interfaces::{
 use serde_json::json;
 
 fn digest(character: char) -> String {
-    std::iter::repeat(character).take(64).collect()
+    std::iter::repeat_n(character, 64).collect()
 }
 
 fn typed_plan() -> MigrationPlanV2 {
@@ -78,8 +78,6 @@ fn public_v2_contract_fails_closed_on_unsafe_or_ambiguous_input() {
     plan.rendered_sql_sha256 = "not-a-digest".to_owned();
     assert_eq!(
         plan.validate(),
-        Err(MigrationPlanV2Error::InvalidSha256(
-            "rendered_sql_sha256"
-        ))
+        Err(MigrationPlanV2Error::InvalidSha256("rendered_sql_sha256"))
     );
 }
