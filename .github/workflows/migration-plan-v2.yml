@@ -1,0 +1,72 @@
+name: Typed migration-plan v2 salvage
+
+on:
+  pull_request:
+    paths:
+      - 'src/migration_plan_v2.rs'
+      - 'src/lib.rs'
+      - 'tests/migration_plan_v2.rs'
+      - 'docs/typed-migration-plan-v2.md'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/migration-plan-v2.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migration-plan-v2-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Check out the exact reviewed head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+          submodules: false
+
+      - name: Prove exact-head execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+
+      - name: Install pinned Rust toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.88.0 --profile minimal --component rustfmt,clippy
+          test "$(rustc +1.88.0 --version | awk '{print $2}')" = '1.88.0'
+
+      - name: Validate typed v2 and stable v1 compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo +1.88.0 fmt --all -- --check
+          cargo +1.88.0 test --locked --all-targets
+          cargo +1.88.0 clippy --locked --all-targets -- -D warnings
+          cargo +1.88.0 build --locked --release
+
+      - name: Enforce the salvage and authority boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e schema/v2/migrationplan.json
+          grep -Fq 'pub const PROTOCOL_VERSION: &str = "1";' src/protocol.rs
+          grep -Fq 'pub const MIGRATION_PLAN_PROTOCOL_VERSION: &str = "2";' src/migration_plan_v2.rs
+          grep -Fq 'STOPPED_FOR_EVALUATION' docs/typed-migration-plan-v2.md
+          grep -Fq 'TypeSpec source' docs/typed-migration-plan-v2.md
+          grep -Fq 'JSON Schema Draft 2020-12 + OpenAPI sources' docs/typed-migration-plan-v2.md
+          if grep -RInE '^(<<<<<<<|=======|>>>>>>>)' --exclude-dir=.git .; then
+            exit 1
+          fi
+          git diff --check
+          git diff --exit-code -- .
