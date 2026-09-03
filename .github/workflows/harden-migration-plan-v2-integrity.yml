@@ -1,0 +1,262 @@
+name: Harden migration-plan v2 statement integrity
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/harden-migration-plan-v2-integrity.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: harden-migration-plan-v2-integrity-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  harden:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+      TARGET_BRANCH: ${{ github.head_ref }}
+    steps:
+      - name: Check out the exact reviewed feature head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: true
+          fetch-depth: 1
+          submodules: false
+
+      - name: Prove exact branch and head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$TARGET_BRANCH" = 'salvage/typed-migration-plan-v2'
+          test "${{ github.event.pull_request.head.repo.full_name }}" = "$GITHUB_REPOSITORY"
+
+      - name: Install pinned Rust toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.88.0 --profile minimal --component rustfmt,clippy
+          test "$(rustc +1.88.0 --version | awk '{print $2}')" = '1.88.0'
+
+      - name: Add assertion-guarded digest verification and tamper tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from __future__ import annotations
+
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              text = file.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one guarded replacement, found {count}')
+              file.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          replace_once(
+              'src/migration_plan_v2.rs',
+              'use serde::{Deserialize, Serialize};\n',
+              'use serde::{Deserialize, Serialize};\nuse sha2::{Digest, Sha256};\n',
+          )
+          replace_once(
+              'src/migration_plan_v2.rs',
+              '''        require_non_empty(&statement.sql, "statement.sql")?;
+                  require_sha256(&statement.sha256, "statement.sha256")?;
+              ''',
+              '''        require_non_empty(&statement.sql, "statement.sql")?;
+                  require_sha256(&statement.sha256, "statement.sha256")?;
+                  if statement.sha256 != sha256_hex(&statement.sql) {
+                      return Err(MigrationPlanV2Error::InvalidPhase(
+                          "statement.sha256 must match statement.sql",
+                      ));
+                  }
+              ''',
+          )
+          replace_once(
+              'src/migration_plan_v2.rs',
+              '''fn require_non_empty(value: &str, field: &'static str) -> Result<(), MigrationPlanV2Error> {
+              ''',
+              '''fn sha256_hex(value: &str) -> String {
+                  format!("{:x}", Sha256::digest(value.as_bytes()))
+              }
+
+              fn require_non_empty(value: &str, field: &'static str) -> Result<(), MigrationPlanV2Error> {
+              ''',
+          )
+          replace_once(
+              'src/migration_plan_v2.rs',
+              '''    fn statement() -> MigrationStatement {
+                      MigrationStatement {
+                          ordinal: 1,
+                          sql: "ALTER TABLE public.accounts ADD COLUMN display_name text".to_owned(),
+                          sha256: digest('d'),
+                      }
+                  }
+              ''',
+              '''    fn statement() -> MigrationStatement {
+                      let sql = "ALTER TABLE public.accounts ADD COLUMN display_name text";
+                      MigrationStatement {
+                          ordinal: 1,
+                          sql: sql.to_owned(),
+                          sha256: sha256_hex(sql),
+                      }
+                  }
+              ''',
+          )
+          replace_once(
+              'src/migration_plan_v2.rs',
+              '''    #[test]
+                  fn rejects_non_lowercase_sha256() {
+              ''',
+              '''    #[test]
+                  fn rejects_statement_digest_that_does_not_match_sql() {
+                      let mut plan = valid_plan();
+                      let MigrationPhase::TransactionalDdl(phase) = &mut plan.phases[0] else {
+                          panic!("test fixture changed");
+                      };
+                      phase.statements[0].sql.push_str(" -- tampered");
+                      assert_eq!(
+                          plan.validate(),
+                          Err(MigrationPlanV2Error::InvalidPhase(
+                              "statement.sha256 must match statement.sql"
+                          ))
+                      );
+                  }
+
+                  #[test]
+                  fn rejects_non_lowercase_sha256() {
+              ''',
+          )
+
+          replace_once(
+              'tests/migration_plan_v2.rs',
+              'use serde_json::json;\n',
+              'use serde_json::json;\nuse sha2::{Digest, Sha256};\n',
+          )
+          replace_once(
+              'tests/migration_plan_v2.rs',
+              '''fn digest(character: char) -> String {
+                  std::iter::repeat_n(character, 64).collect()
+              }
+              ''',
+              '''fn digest(character: char) -> String {
+                  std::iter::repeat_n(character, 64).collect()
+              }
+
+              fn statement_sha256(sql: &str) -> String {
+                  format!("{:x}", Sha256::digest(sql.as_bytes()))
+              }
+              ''',
+          )
+          replace_once(
+              'tests/migration_plan_v2.rs',
+              '''                sha256: digest('d'),
+              ''',
+              '''                sha256: statement_sha256(
+                                  "ALTER TABLE public.accounts ADD COLUMN display_name text",
+                              ),
+              ''',
+          )
+          replace_once(
+              'tests/migration_plan_v2.rs',
+              '''    let mut plan = typed_plan();
+                  plan.rendered_sql_sha256 = "not-a-digest".to_owned();
+              ''',
+              '''    let mut plan = typed_plan();
+                  let MigrationPhase::TransactionalDdl(phase) = &mut plan.phases[0] else {
+                      panic!("test fixture changed");
+                  };
+                  phase.statements[0].sql.push_str(" -- modified");
+                  assert_eq!(
+                      plan.validate(),
+                      Err(MigrationPlanV2Error::InvalidPhase(
+                          "statement.sha256 must match statement.sql"
+                      ))
+                  );
+
+                  let mut plan = typed_plan();
+                  plan.rendered_sql_sha256 = "not-a-digest".to_owned();
+              ''',
+          )
+
+          replace_once(
+              'tests/migration_plan_v2_adversarial.rs',
+              'use serde_json::Value;\n',
+              'use serde_json::Value;\nuse sha2::{Digest, Sha256};\n',
+          )
+          replace_once(
+              'tests/migration_plan_v2_adversarial.rs',
+              '''fn statement(ordinal: u32, sql: &str, digest_character: char) -> MigrationStatement {
+                  MigrationStatement {
+                      ordinal,
+                      sql: sql.to_owned(),
+                      sha256: digest(digest_character),
+                  }
+              }
+              ''',
+              '''fn statement(ordinal: u32, sql: &str, _digest_character: char) -> MigrationStatement {
+                  MigrationStatement {
+                      ordinal,
+                      sql: sql.to_owned(),
+                      sha256: format!("{:x}", Sha256::digest(sql.as_bytes())),
+                  }
+              }
+              ''',
+          )
+          replace_once(
+              'tests/migration_plan_v2_adversarial.rs',
+              '''    let mut plan = all_phase_plan();
+                  let MigrationPhase::Validation(phase) = &mut plan.phases[4] else {
+              ''',
+              '''    let mut plan = all_phase_plan();
+                  let MigrationPhase::TransactionalDdl(phase) = &mut plan.phases[0] else {
+                      panic!("fixture phase order changed");
+                  };
+                  phase.statements[0].sha256 = digest('0');
+                  assert_eq!(
+                      plan.validate(),
+                      Err(MigrationPlanV2Error::InvalidPhase(
+                          "statement.sha256 must match statement.sql"
+                      ))
+                  );
+
+                  let mut plan = all_phase_plan();
+                  let MigrationPhase::Validation(phase) = &mut plan.phases[4] else {
+              ''',
+          )
+          PY
+          cargo +1.88.0 fmt --all
+          cargo +1.88.0 test --all-targets
+          cargo +1.88.0 clippy --all-targets -- -D warnings
+          cargo +1.88.0 build --release
+          git diff --check
+          if grep -RInE '^(<<<<<<<|=======|>>>>>>>)' --exclude-dir=.git .; then
+            exit 1
+          fi
+
+      - name: Commit the integrity fix and remove this one-time workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          rm .github/workflows/harden-migration-plan-v2-integrity.yml
+          mapfile -t changed < <(git diff --name-only | sort)
+          expected=(
+            .github/workflows/harden-migration-plan-v2-integrity.yml
+            src/migration_plan_v2.rs
+            tests/migration_plan_v2.rs
+            tests/migration_plan_v2_adversarial.rs
+          )
+          test "${changed[*]}" = "${expected[*]}"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- "${expected[@]}"
+          git commit -m 'fix: verify migration statement digests against SQL'
+          git push origin "HEAD:$TARGET_BRANCH"
