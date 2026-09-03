@@ -1,0 +1,48 @@
+name: peer authority contracts
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: peer-authority-contracts-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.88.0 --profile minimal --component rustfmt,clippy
+      - name: Format
+        run: cargo +1.88.0 fmt --all -- --check
+      - name: Test fail-closed certificate model
+        run: cargo +1.88.0 test --all-targets
+      - name: Clippy
+        run: cargo +1.88.0 clippy --all-targets -- -D warnings
+      - name: Parse versioned comparison schemas
+        run: |
+          python3 - <<'PY'
+          import json
+          import pathlib
+
+          expected = (
+              "schema/v1/generated-type-manifest.json",
+              "schema/v1/orm-projection-manifest.json",
+              "schema/v1/peer-authority-certification.json",
+          )
+          for name in expected:
+              path = pathlib.Path(name)
+              document = json.loads(path.read_text(encoding="utf-8"))
+              assert document["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+              assert document["$id"].endswith(path.name)
+          PY

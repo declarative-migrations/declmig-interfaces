@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/declarative-migrations/declmig-interfaces/schema/v1/peer-authority-certification.json",
+  "title": "PeerAuthorityCertification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "decision",
+    "decisionEligible",
+    "issuedAtUnixSeconds",
+    "expiresAtUnixSeconds",
+    "policy",
+    "comparisons",
+    "inputs"
+  ],
+  "properties": {
+    "format": {
+      "const": "declmig.peer-authority-certification/v1"
+    },
+    "decision": {
+      "enum": [
+        "continue",
+        "pause"
+      ]
+    },
+    "decisionEligible": {
+      "type": "boolean"
+    },
+    "issuedAtUnixSeconds": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "expiresAtUnixSeconds": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "policy": {
+      "$ref": "#/$defs/policy"
+    },
+    "comparisons": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/comparison"
+      }
+    },
+    "inputs": {
+      "$ref": "#/$defs/inputs"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "identity": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "automaticWinner",
+        "onDiscrepancy",
+        "requiredComparisons"
+      ],
+      "properties": {
+        "automaticWinner": {
+          "const": false
+        },
+        "onDiscrepancy": {
+          "const": "pause-and-evaluate"
+        },
+        "requiredComparisons": {
+          "const": [
+            "typespec-vs-json-schema-openapi-sql-catalog",
+            "typespec-vs-json-schema-openapi-generated-types",
+            "seaorm-vs-diesel-orm-projection"
+          ]
+        }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "left",
+        "right",
+        "status",
+        "evidenceSha256"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "sql-catalog",
+            "generated-types",
+            "orm-projection"
+          ]
+        },
+        "left": {
+          "type": "string",
+          "minLength": 1
+        },
+        "right": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "pass",
+            "discrepancy",
+            "missing",
+            "error"
+          ]
+        },
+        "toolExitCode": {
+          "type": "integer"
+        },
+        "message": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidenceSha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "logicalRevision",
+        "engine",
+        "engineVersion",
+        "desiredCatalogSha256",
+        "dpmSha256",
+        "typeSpecSourceSha256",
+        "jsonSchemaOpenApiSourceSha256",
+        "typespecSqlSha256",
+        "jsonSchemaOpenApiSqlSha256",
+        "protobufDescriptorSha256",
+        "grpcDescriptorSha256",
+        "typespecTypesSha256",
+        "jsonSchemaOpenApiTypesSha256",
+        "wireClientSha256",
+        "writeClientSha256",
+        "seaOrmProjectionSha256",
+        "dieselProjectionSha256",
+        "typespecGeneratorSha256",
+        "jsonSchemaOpenApiGeneratorSha256",
+        "seaOrmGeneratorSha256",
+        "dieselGeneratorSha256"
+      ],
+      "properties": {
+        "logicalRevision": {
+          "$ref": "#/$defs/identity"
+        },
+        "engine": {
+          "$ref": "#/$defs/identity"
+        },
+        "engineVersion": {
+          "$ref": "#/$defs/identity"
+        },
+        "desiredCatalogSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "dpmSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "typeSpecSourceSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "jsonSchemaOpenApiSourceSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "typespecSqlSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "jsonSchemaOpenApiSqlSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "protobufDescriptorSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "grpcDescriptorSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "typespecTypesSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "jsonSchemaOpenApiTypesSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "wireClientSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "writeClientSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "seaOrmProjectionSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "dieselProjectionSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "typespecGeneratorSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "jsonSchemaOpenApiGeneratorSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "seaOrmGeneratorSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "dieselGeneratorSha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}
