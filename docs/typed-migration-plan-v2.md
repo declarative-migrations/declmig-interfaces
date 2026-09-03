@@ -27,6 +27,20 @@ values, zero timeouts or batch sizes, destructive changes outside a destructive
 cleanup phase, missing destructive approval/backup evidence, malformed checks,
 and CockroachDB-only phases in PostgreSQL plans fail closed.
 
+### Statement integrity
+
+Every migration statement carries an exact lowercase SHA-256 digest of its SQL
+bytes. Validation now recomputes that digest rather than checking only its
+shape. Changing SQL without changing the digest, or replacing the digest with a
+different valid-looking 64-character hexadecimal value, returns the stable
+fail-closed error `statement.sha256 must match statement.sql`.
+
+This binds statement order and content inside each typed phase. The top-level
+`rendered_sql_sha256` remains a separately supplied release-evidence digest
+because the canonical rendering may include separators and planner metadata not
+recoverable from the individual statement array alone. Its provenance and
+recomputation remain mandatory in the DPM planner/release gate.
+
 ## Independent authority requirement
 
 This Rust type is not contract authority by itself. Before v2 may become a
@@ -71,7 +85,8 @@ Publication remains blocked until CI proves:
    shared positive and negative fixtures;
 4. the TypeSpec Protobuf/gRPC lane preserves stable field numbers,
    reservations, and streaming cardinality where used;
-5. the typed DPM planner and executor consume the same semantic envelope;
+5. the typed DPM planner and executor consume the same semantic envelope and
+   recompute the top-level rendered-SQL evidence digest;
 6. generated artifacts carry exact source/compiler/output digests; and
 7. every discrepancy produces one deterministic report and remains
    `STOPPED_FOR_EVALUATION` rather than selecting an automatic winner.
