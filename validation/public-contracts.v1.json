@@ -5,16 +5,11 @@
   "contractVersion": "ores.validation.v1",
   "visibility": "public",
   "routeAuthority": "https://github.com/ORESoftware/api-docs",
-  "type": "object",
-  "oneOf": [
-    {"$ref": "#/$defs/RequestMeta"},
-    {"$ref": "#/$defs/PageQuery"},
-    {"$ref": "#/$defs/ProblemDetails"}
-  ],
+  "$ref": "#/$defs/PublicValidationContract",
   "$defs": {
     "RequestMeta": {
       "type": "object",
-      "additionalProperties": false,
+      "unevaluatedProperties": false,
       "required": ["requestId", "traceId"],
       "properties": {
         "requestId": {"type": "string", "minLength": 1, "maxLength": 128},
@@ -24,7 +19,7 @@
     },
     "PageQuery": {
       "type": "object",
-      "additionalProperties": false,
+      "unevaluatedProperties": false,
       "required": ["limit"],
       "properties": {
         "limit": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50},
@@ -33,7 +28,7 @@
     },
     "ProblemDetails": {
       "type": "object",
-      "additionalProperties": false,
+      "unevaluatedProperties": false,
       "required": ["type", "title", "status", "requestId"],
       "properties": {
         "type": {"type": "string", "minLength": 1, "maxLength": 512},
@@ -42,6 +37,13 @@
         "detail": {"type": "string", "maxLength": 4096},
         "requestId": {"type": "string", "minLength": 1, "maxLength": 128}
       }
+    },
+    "PublicValidationContract": {
+      "oneOf": [
+        {"$ref": "#/$defs/RequestMeta"},
+        {"$ref": "#/$defs/PageQuery"},
+        {"$ref": "#/$defs/ProblemDetails"}
+      ]
     }
   },
   "x-ores-routeBindings": []
