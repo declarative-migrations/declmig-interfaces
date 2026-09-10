@@ -19,18 +19,67 @@ permissions:
 jobs:
   parity:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Check out exact candidate head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Verify exact candidate revision
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+
+      - name: Check out pinned api-docs parity tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ORESoftware/api-docs
           ref: c75c3924847a42d8d2854eb78c85f330ea726bef
           path: .deps/api-docs
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+
+      - name: Check out pinned TypeSpec ↔ JSON Schema validator
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ORESoftware/typespec-json-schema-validator
+          ref: 1103cba975608669a537265a99edc01a2cb59241
+          path: .deps/typespec-json-schema-validator
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "22.16.0"
-      - run: node .deps/api-docs/tools/validation-parity/parity-tool.mjs --self-test
-      - run: node .deps/api-docs/tools/validation-parity/parity-tool.mjs --check
+
+      - name: Install pinned TJSV dependencies
+        run: npm ci --prefix .deps/typespec-json-schema-validator
+
+      - name: Enforce TypeSpec ↔ JSON Schema peer-authority parity with TJSV
+        shell: bash
+        run: |
+          set -euo pipefail
+          node .deps/typespec-json-schema-validator/bin/typespec-json-schema-validator.mjs check \
+            --typespec=validation/typespec/validation.tsp \
+            --schema=validation/public-contracts.v1.json \
+            --report="${RUNNER_TEMP}/declmig-tjsv-validation-parity.json" \
+            --quiet
+
+      - name: Retain deterministic TJSV receipt
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: declmig-tjsv-validation-parity
+          path: ${{ runner.temp }}/declmig-tjsv-validation-parity.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Self-test existing runtime parity tooling
+        run: node .deps/api-docs/tools/validation-parity/parity-tool.mjs --self-test
+
+      - name: Check existing generated runtime parity
+        run: node .deps/api-docs/tools/validation-parity/parity-tool.mjs --check
