@@ -39,7 +39,7 @@
       }
     },
     "PublicValidationContract": {
-      "oneOf": [
+      "anyOf": [
         {"$ref": "#/$defs/RequestMeta"},
         {"$ref": "#/$defs/PageQuery"},
         {"$ref": "#/$defs/ProblemDetails"}
