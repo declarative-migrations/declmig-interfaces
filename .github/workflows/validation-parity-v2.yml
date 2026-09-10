@@ -62,12 +62,20 @@ jobs:
       - name: Enforce TypeSpec ↔ JSON Schema peer-authority parity with TJSV
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          report="${RUNNER_TEMP}/declmig-tjsv-validation-parity.json"
+          set +e
           node .deps/typespec-json-schema-validator/bin/typespec-json-schema-validator.mjs check \
             --typespec=validation/typespec/validation.tsp \
             --schema=validation/public-contracts.v1.json \
-            --report="${RUNNER_TEMP}/declmig-tjsv-validation-parity.json" \
-            --quiet
+            --report="$report"
+          status=$?
+          set -e
+          if [[ -f "$report" ]]; then
+            echo "TJSV deterministic report:"
+            jq . "$report"
+          fi
+          exit "$status"
 
       - name: Retain deterministic TJSV receipt
         if: ${{ always() }}
