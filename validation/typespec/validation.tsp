@@ -19,4 +19,8 @@ model ProblemDetails {
   @minLength(1) @maxLength(128) requestId: string;
 }
 
-alias PublicValidationContract = RequestMeta | PageQuery | ProblemDetails;
+union PublicValidationContract {
+  RequestMeta,
+  PageQuery,
+  ProblemDetails,
+}
