@@ -1,0 +1,80 @@
+{
+  "agreement": true,
+  "contractVersion": "ores.validation.v2",
+  "finalAggregateDigest": "2c04efc4a226d5609eeec77b0556901c535a0f2cf99a5ce688caa83abf25f119",
+  "finalTargetDigests": {
+    "gleam/isomorphic/src/declmig_validation_interfaces_isomorphic.gleam": "028a23aef2ebd659b3319d30c35d5918edee9a18cd661426d8bf8934ecc860c5",
+    "golang/isomorphic/types.go": "7c9cc69ed69d0a1f697ab5628b82d66b8c0c8b2f6a27a3020d0b2014f0d86772",
+    "rust/isomorphic/src/lib.rs": "d939437f3c642af4633d438d716188a226b211c0474fdf8ba78c976882ecdc41",
+    "typescript/isomorphic/types.ts": "f0f9ac6f8dd24b25345fbccfa0e7e40b64688128fe6b213d98c2b24f863fbc2c",
+    "typescript/runtime/browser/index.ts": "a028f5d8a3dd98dc3d1078c43f6c798935ee5b0f7296f7f7a017341097a2db53",
+    "typescript/runtime/bun/index.ts": "88dc4c46cd4f652590565164a77d227d3d6c9a2b53e5e56583bc4f69c6f03ab4",
+    "typescript/runtime/deno/index.ts": "1f904c946fa84af88a4e5e5519679f1b4ae6b301aa642131ebe6b350fb7cde51",
+    "typescript/runtime/edge/index.ts": "886bd463bd3b3a655dc3d3dc2a1f102be8b68d58b083df1939310d2bc1763eef",
+    "typescript/runtime/node/index.ts": "4ea13c768eeaa3ffd2e9e673f36411db6db9ce4bfdae139c781fee99c7a7d248"
+  },
+  "generatedOnlyAfterAgreement": true,
+  "receiptVersion": "ores.validation.parity-receipt.v2",
+  "repository": "declarative-migrations/declmig-interfaces",
+  "routeAuthority": "https://github.com/ORESoftware/api-docs",
+  "routeBindings": {
+    "count": 0,
+    "operationIds": [],
+    "path": "validation/route-bindings.v1.json",
+    "semanticDigest": "9360cbcfd236e304f3b9437df8449345971942156d24c335b677081b648c4710"
+  },
+  "runtimeExports": {
+    "browser": [
+      "isomorphic",
+      "client"
+    ],
+    "bun": [
+      "isomorphic",
+      "client",
+      "edge",
+      "server"
+    ],
+    "deno": [
+      "isomorphic",
+      "client",
+      "edge",
+      "server"
+    ],
+    "edge": [
+      "isomorphic",
+      "client",
+      "edge"
+    ],
+    "node": [
+      "isomorphic",
+      "client",
+      "server"
+    ]
+  },
+  "scopes": {
+    "isomorphic": {
+      "agreement": true,
+      "authorities": {
+        "jsonSchema": {
+          "path": "validation/public-contracts.v1.json",
+          "semanticDigest": "4225441d8b1c8c8223d8052d8a4d316e564ac0f0fb714aa0e339857e4295c073"
+        },
+        "typespec": {
+          "path": "validation/typespec/validation.tsp",
+          "semanticDigest": "4225441d8b1c8c8223d8052d8a4d316e564ac0f0fb714aa0e339857e4295c073"
+        }
+      },
+      "models": [
+        "PageQuery",
+        "ProblemDetails",
+        "RequestMeta"
+      ],
+      "targetDigests": {
+        "gleam/isomorphic/src/declmig_validation_interfaces_isomorphic.gleam": "028a23aef2ebd659b3319d30c35d5918edee9a18cd661426d8bf8934ecc860c5",
+        "golang/isomorphic/types.go": "7c9cc69ed69d0a1f697ab5628b82d66b8c0c8b2f6a27a3020d0b2014f0d86772",
+        "rust/isomorphic/src/lib.rs": "d939437f3c642af4633d438d716188a226b211c0474fdf8ba78c976882ecdc41",
+        "typescript/isomorphic/types.ts": "f0f9ac6f8dd24b25345fbccfa0e7e40b64688128fe6b213d98c2b24f863fbc2c"
+      }
+    }
+  }
+}

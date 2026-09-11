@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/declarative-migrations/declmig-interfaces/schema/v1/canonical-type-manifest.json",
+  "title": "Canonical Type and Operation Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "authority", "contractRevision", "generator", "types", "operations"],
+  "properties": {
+    "format": {"const": "canonical-type-manifest/v1"},
+    "authority": {"enum": ["typespec", "json-schema-openapi"]},
+    "contractRevision": {"type": "string", "minLength": 1},
+    "sourceSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "configurationSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "types": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/typeDefinition"}
+    },
+    "operations": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/operation"}
+    }
+  },
+  "$defs": {
+    "constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "minimum": {"type": ["number", "string"]},
+        "maximum": {"type": ["number", "string"]},
+        "exclusiveMinimum": {"type": ["number", "string"]},
+        "exclusiveMaximum": {"type": ["number", "string"]},
+        "minLength": {"type": "integer", "minimum": 0},
+        "maxLength": {"type": "integer", "minimum": 0},
+        "pattern": {"type": "string"},
+        "format": {"type": "string"},
+        "precision": {"type": "integer", "minimum": 1},
+        "scale": {"type": "integer", "minimum": 0},
+        "minItems": {"type": "integer", "minimum": 0},
+        "maxItems": {"type": "integer", "minimum": 0},
+        "uniqueItems": {"type": "boolean"}
+      }
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "required", "nullable", "readOnly", "writeOnly"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "serializedName": {"type": "string", "minLength": 1},
+        "type": {"type": "string", "minLength": 1},
+        "required": {"type": "boolean"},
+        "nullable": {"type": "boolean"},
+        "readOnly": {"type": "boolean"},
+        "writeOnly": {"type": "boolean"},
+        "default": true,
+        "constraints": {"$ref": "#/$defs/constraint"}
+      }
+    },
+    "variant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "serializedValue"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "serializedValue": {"type": ["string", "integer", "number", "boolean", "null"]},
+        "type": {"type": "string", "minLength": 1}
+      }
+    },
+    "typeDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "kind", "fields", "variants"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["object", "enum", "scalar", "union", "array", "map"]},
+        "baseType": {"type": "string", "minLength": 1},
+        "elementType": {"type": "string", "minLength": 1},
+        "keyType": {"type": "string", "minLength": 1},
+        "valueType": {"type": "string", "minLength": 1},
+        "discriminator": {"type": "string", "minLength": 1},
+        "fields": {"type": "array", "items": {"$ref": "#/$defs/field"}},
+        "variants": {"type": "array", "items": {"$ref": "#/$defs/variant"}},
+        "constraints": {"$ref": "#/$defs/constraint"}
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "transport", "requestType", "responseType", "errorTypes", "clientDirection", "streaming"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "transport": {"enum": ["http", "grpc", "rpc", "event"]},
+        "method": {"type": "string", "minLength": 1},
+        "path": {"type": "string"},
+        "requestType": {"type": "string", "minLength": 1},
+        "responseType": {"type": "string", "minLength": 1},
+        "errorTypes": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "clientDirection": {"enum": ["read", "write", "bidirectional"]},
+        "streaming": {"enum": ["none", "client", "server", "bidirectional"]}
+      }
+    }
+  }
+}

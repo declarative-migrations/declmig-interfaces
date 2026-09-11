@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/declarative-migrations/declmig-interfaces/schema/v1/generated-type-manifest.json",
+  "title": "GeneratedTypeManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "authority", "generator", "semanticModel"],
+  "properties": {
+    "format": {
+      "const": "declmig.generated-types/v1"
+    },
+    "authority": {
+      "enum": ["typespec", "json-schema-openapi"]
+    },
+    "generator": {
+      "$ref": "#/$defs/generator"
+    },
+    "semanticModel": {
+      "$ref": "#/$defs/semanticModel"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{64}$"
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "sourceSha256"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "sourceSha256": {"$ref": "#/$defs/sha256"},
+        "lockfileSha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "semanticModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["models", "services"],
+      "properties": {
+        "models": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/model"}
+        },
+        "services": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/service"}
+        }
+      }
+    },
+    "model": {
+      "oneOf": [
+        {"$ref": "#/$defs/objectModel"},
+        {"$ref": "#/$defs/enumModel"},
+        {"$ref": "#/$defs/unionModel"},
+        {"$ref": "#/$defs/scalarModel"}
+      ]
+    },
+    "objectModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "name", "fields"],
+      "properties": {
+        "kind": {"const": "object"},
+        "name": {"$ref": "#/$defs/qualifiedName"},
+        "fields": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/field"}
+        }
+      }
+    },
+    "enumModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "name", "values"],
+      "properties": {
+        "kind": {"const": "enum"},
+        "name": {"$ref": "#/$defs/qualifiedName"},
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "wireValue"],
+            "properties": {
+              "name": {"type": "string", "minLength": 1},
+              "wireValue": {"type": ["string", "integer"]},
+              "protobufNumber": {"type": "integer", "minimum": 0}
+            }
+          }
+        }
+      }
+    },
+    "unionModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "name", "closed", "variants"],
+      "properties": {
+        "kind": {"const": "union"},
+        "name": {"$ref": "#/$defs/qualifiedName"},
+        "closed": {"type": "boolean"},
+        "discriminator": {"type": "string", "minLength": 1},
+        "variants": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "type"],
+            "properties": {
+              "name": {"type": "string", "minLength": 1},
+              "type": {"$ref": "#/$defs/typeRef"},
+              "discriminatorValue": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "scalarModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "name", "wireKind"],
+      "properties": {
+        "kind": {"const": "scalar"},
+        "name": {"$ref": "#/$defs/qualifiedName"},
+        "wireKind": {
+          "enum": [
+            "boolean",
+            "string",
+            "bytes",
+            "int32",
+            "uint32",
+            "int64",
+            "uint64",
+            "float32",
+            "float64",
+            "decimal",
+            "timestamp",
+            "date",
+            "duration",
+            "uuid",
+            "json"
+          ]
+        },
+        "format": {"type": "string"},
+        "pattern": {"type": "string"}
+      }
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "type",
+        "required",
+        "nullable",
+        "visibility"
+      ],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "type": {"$ref": "#/$defs/typeRef"},
+        "required": {"type": "boolean"},
+        "nullable": {"type": "boolean"},
+        "visibility": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"enum": ["read", "create", "update", "delete"]}
+        },
+        "protobufField": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 536870911,
+          "not": {"minimum": 19000, "maximum": 19999}
+        },
+        "defaultJson": true
+      }
+    },
+    "typeRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["container", "name"],
+      "properties": {
+        "container": {"enum": ["scalar", "model", "list", "map"]},
+        "name": {"type": "string", "minLength": 1},
+        "element": {"$ref": "#/$defs/typeRef"},
+        "key": {"$ref": "#/$defs/typeRef"},
+        "value": {"$ref": "#/$defs/typeRef"}
+      }
+    },
+    "service": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "operations"],
+      "properties": {
+        "name": {"$ref": "#/$defs/qualifiedName"},
+        "operations": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/operation"}
+        }
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "transport", "request", "response"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "transport": {"enum": ["http", "grpc"]},
+        "request": {"$ref": "#/$defs/typeRef"},
+        "response": {"$ref": "#/$defs/typeRef"},
+        "httpMethod": {"enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]},
+        "httpPath": {"type": "string", "pattern": "^/"},
+        "streaming": {"enum": ["none", "request", "response", "duplex"]}
+      }
+    },
+    "qualifiedName": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_.]*$"
+    }
+  }
+}
