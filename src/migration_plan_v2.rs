@@ -264,7 +264,10 @@ impl MigrationPlanV2 {
     /// Describe review risks without changing the plan or its validation.
     #[must_use]
     pub fn safety_summary(&self) -> PlanSafetySummary {
-        let mut summary = PlanSafetySummary { phases: self.phases.len(), ..PlanSafetySummary::default() };
+        let mut summary = PlanSafetySummary {
+            phases: self.phases.len(),
+            ..PlanSafetySummary::default()
+        };
         for phase in &self.phases {
             match phase.metadata().safety {
                 SafetyClass::Blocking => summary.blocking += 1,
