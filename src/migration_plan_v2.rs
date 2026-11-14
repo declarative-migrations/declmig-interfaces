@@ -236,7 +236,45 @@ pub struct MigrationPlanV2 {
     pub phases: Vec<MigrationPhase>,
 }
 
+/// Informational phase counts for rendering a review screen.
+/// This does not grant permission to execute a migration.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct PlanSafetySummary {
+    pub phases: usize,
+    pub blocking: usize,
+    pub destructive: usize,
+    pub manual_review: usize,
+}
+
+impl MigrationPhase {
+    fn metadata(&self) -> &PhaseMetadata {
+        match self {
+            Self::TransactionalDdl(p) => &p.metadata,
+            Self::NonTransactionalDdl(p) => &p.metadata,
+            Self::CockroachSchemaJob(p) => &p.metadata,
+            Self::DataBackfill(p) => &p.metadata,
+            Self::Validation(p) => &p.metadata,
+            Self::TrafficTransition(p) => &p.metadata,
+            Self::DestructiveCleanup(p) => &p.metadata,
+        }
+    }
+}
+
 impl MigrationPlanV2 {
+    /// Describe review risks without changing the plan or its validation.
+    #[must_use]
+    pub fn safety_summary(&self) -> PlanSafetySummary {
+        let mut summary = PlanSafetySummary { phases: self.phases.len(), ..PlanSafetySummary::default() };
+        for phase in &self.phases {
+            match phase.metadata().safety {
+                SafetyClass::Blocking => summary.blocking += 1,
+                SafetyClass::Destructive => summary.destructive += 1,
+                SafetyClass::ManualReview => summary.manual_review += 1,
+                SafetyClass::Safe | SafetyClass::Online => {}
+            }
+        }
+        summary
+    }
     /// Decodes and validates a typed migration-plan v2 envelope.
     ///
     /// # Errors
