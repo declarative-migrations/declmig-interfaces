@@ -246,20 +246,6 @@ pub struct PlanSafetySummary {
     pub manual_review: usize,
 }
 
-impl MigrationPhase {
-    fn metadata(&self) -> &PhaseMetadata {
-        match self {
-            Self::TransactionalDdl(p) => &p.metadata,
-            Self::NonTransactionalDdl(p) => &p.metadata,
-            Self::CockroachSchemaJob(p) => &p.metadata,
-            Self::DataBackfill(p) => &p.metadata,
-            Self::Validation(p) => &p.metadata,
-            Self::TrafficTransition(p) => &p.metadata,
-            Self::DestructiveCleanup(p) => &p.metadata,
-        }
-    }
-}
-
 impl MigrationPlanV2 {
     /// Describe review risks without changing the plan or its validation.
     #[must_use]
