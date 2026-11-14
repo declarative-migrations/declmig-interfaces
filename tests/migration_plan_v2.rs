@@ -100,3 +100,22 @@ fn public_v2_contract_fails_closed_on_unsafe_or_ambiguous_input() {
         Err(MigrationPlanV2Error::InvalidSha256("rendered_sql_sha256"))
     );
 }
+
+#[test]
+fn safety_summary_is_informational_and_counts_review_risks() {
+    let mut plan = typed_plan();
+    let baseline = plan.safety_summary();
+    assert_eq!(baseline.phases, 1);
+    assert_eq!(baseline.destructive, 0);
+    assert_eq!(baseline.manual_review, 0);
+    assert_eq!(baseline.blocking, 0);
+
+    let MigrationPhase::TransactionalDdl(phase) = &mut plan.phases[0] else {
+        panic!("fixture expected transactional phase");
+    };
+    phase.metadata.safety = SafetyClass::Destructive;
+    let summary = plan.safety_summary();
+    assert_eq!(summary.phases, 1);
+    assert_eq!(summary.destructive, 1);
+    assert_eq!(summary.blocking, 0);
+}
