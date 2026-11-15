@@ -14,7 +14,9 @@ parity receipt, SQL catalogs, and six-peer admission decisions are unchanged.
 No absent generator, unchecked type, or failing peer may be treated as passing.
 
 `tests/atto_projection_contract.rs` checks the projection's field names and
-required-string invariants against the canonical v1 JSON Schema. The pinned
-AttoLang compiler CI compiles the candidate with a smoke main exercising
-edge-case guards. Compilation does not prove guest Wasm execution; add
-real runtime tests on the AttoLang targets before claiming full Atto support.
+required-string invariants against the canonical v1 JSON Schema. The
+`projections/atto/tests/smoke.atto` fixture is prepared for a future pinned
+compiler and guest executor. Source-only CI runs the Rust tests; AttoLang
+compilation and execution are **NOT_EXECUTED** because the current runner
+cannot check out the private compiler across organizations. Real compiler
+and backend execution evidence is required before promotion.
