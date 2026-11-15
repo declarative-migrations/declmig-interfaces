@@ -23,7 +23,11 @@ fn atto_plan_header_tracks_required_v1_json_schema_fields() {
 #[test]
 fn atto_health_projection_exposes_only_existing_fields() {
     assert!(ATTO.contains("define class HealthContract as"));
-    for field in ["pub bool ok:", "pub string service:", "pub string protocol:"] {
+    for field in [
+        "pub bool ok:",
+        "pub string service:",
+        "pub string protocol:",
+    ] {
         assert!(ATTO.contains(field));
     }
     assert!(ATTO.contains("supported_v1_protocol(int protocol_number)"));
