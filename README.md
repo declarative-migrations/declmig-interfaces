@@ -24,3 +24,7 @@ JSON Schema contracts remain under `schema/v1`. Generated TypeScript and Dart
 surfaces remain under `generated/` and must stay types-only. TypeSpec source and
 its pinned generation toolchain will live under `typespec/`; until that peer
 path exists and passes certification, release parity is deliberately paused.
+
+A non-authoritative AttoLang `*.atto` contract projection and smoke fixture
+live under [`projections/atto`](docs/atto-contract-projection.md). They do not
+alter the parity receipt or constitute a third contract authority.

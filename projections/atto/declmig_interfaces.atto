@@ -1,0 +1,30 @@
+// Non-authoritative AttoLang projection of the v1 contract metadata.
+// The MigrationPlan JSON payload remains opaque. Promotion requires peer parity.
+define class HealthContract as
+    pub bool ok: false
+    pub string service: ""
+    pub string protocol: "1"
+end
+
+define class MigrationPlanHeader as
+    pub string id: ""
+    pub string revision: ""
+end
+
+pub fnc health_metadata_lengths_valid(int service_bytes, int protocol_bytes): bool {
+    if service_bytes <= 0 then
+        return false;
+    fi
+    return protocol_bytes > 0;
+}
+
+pub fnc migration_header_lengths_valid(int id_bytes, int revision_bytes): bool {
+    if id_bytes <= 0 then
+        return false;
+    fi
+    return revision_bytes > 0;
+}
+
+pub fnc supported_v1_protocol(int protocol_number): bool {
+    return protocol_number == 1;
+}

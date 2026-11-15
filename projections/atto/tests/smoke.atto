@@ -1,0 +1,14 @@
+// Compile with ../declmig_interfaces.atto prepended. expect-exit: 0
+pub fnc main(): int {
+    if health_metadata_lengths_valid(0, 1) then return 1; fi
+    if health_metadata_lengths_valid(1, 0) then return 2; fi
+    if health_metadata_lengths_valid(1, 1) == false then return 3; fi
+    if migration_header_lengths_valid(0, 1) then return 4; fi
+    if migration_header_lengths_valid(1, 0) then return 5; fi
+    if migration_header_lengths_valid(1, 1) == false then return 6; fi
+    if supported_v1_protocol(2) then return 7; fi
+    if supported_v1_protocol(1) == false then return 8; fi
+    val health = new HealthContract();
+    if health.ok then return 9; fi
+    return 0;
+}
